@@ -71,21 +71,17 @@ resource "google_storage_bucket" "terraform_state" {
 }
 
 # Dedicated bucket for Terraform state bucket access logs
+# Dedicated bucket for Terraform state bucket access logs
 resource "google_storage_bucket" "terraform_state_logs" {
-  name     = "${var.state_bucket_name}-access-logs"
-  project  = var.project_id
-  location = var.region
-
+  name                        = "${var.state_bucket_name}-access-logs"
+  project                     = var.project_id
+  location                    = var.region
   uniform_bucket_level_access = true
-  public_access_prevention   = "enforced"
-  force_destroy              = false
+  public_access_prevention    = "enforced"
+  force_destroy               = false
 
   versioning {
     enabled = true
-  }
-
-  logging {
-    log_bucket = google_storage_bucket.terraform_state.name
   }
 
   labels = {
@@ -137,8 +133,8 @@ resource "google_iam_workload_identity_pool" "github" {
 
 # GitHub OIDC Provider
 
-resource "google_iam_workload_identity_pool_provider" "github" {
 
+resource "google_iam_workload_identity_pool_provider" "github" {
   project = var.project_id
 
   workload_identity_pool_id = (
@@ -158,6 +154,7 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   }
 
   attribute_condition = <<-EOT
+    assertion.sub == "repo:${var.github_owner}/${var.github_repository}:ref:refs/heads/main" &&
     assertion.repository_owner_id == "${var.github_owner_id}" &&
     assertion.repository_id == "${var.github_repository_id}" &&
     assertion.repository == "${var.github_repository}" &&
@@ -170,6 +167,7 @@ resource "google_iam_workload_identity_pool_provider" "github" {
     issuer_uri = "https://token.actions.githubusercontent.com"
   }
 }
+
 
 
 # Allow only the specified GitHub repository

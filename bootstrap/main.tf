@@ -64,6 +64,48 @@ resource "google_storage_bucket" "terraform_state" {
   depends_on = [
     google_project_service.apis
   ]
+
+  logging {
+    log_bucket = google_storage_bucket.terraform_state_logs.name
+  }
+}
+
+# Dedicated bucket for Terraform state bucket access logs
+resource "google_storage_bucket" "terraform_state_logs" {
+  name     = "${var.state_bucket_name}-access-logs"
+  project  = var.project_id
+  location = var.region
+
+  uniform_bucket_level_access = true
+  public_access_prevention   = "enforced"
+  force_destroy              = false
+
+  versioning {
+    enabled = true
+  }
+
+  logging {
+    log_bucket = google_storage_bucket.terraform_state.name
+  }
+
+  labels = {
+    project     = "securecloud"
+    environment = "shared"
+    managed_by  = "terraform"
+    purpose     = "terraform-state-access-logs"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+# Allow the Cloud Storage logging service to write access logs
+resource "google_storage_bucket_iam_member" "terraform_state_logs_writer" {
+  bucket = google_storage_bucket.terraform_state_logs.name
+  role   = "roles/storage.objectCreator"
+
+  member = "group:cloud-storage-analytics@google.com"
 }
 
 
@@ -111,11 +153,15 @@ resource "google_iam_workload_identity_pool_provider" "github" {
     "google.subject"                = "assertion.sub"
     "attribute.repository_id"       = "assertion.repository_id"
     "attribute.repository_owner_id" = "assertion.repository_owner_id"
+    "attribute.repository"          = "assertion.repository"
+    "attribute.repository_owner"    = "assertion.repository_owner"
   }
 
   attribute_condition = <<-EOT
     assertion.repository_owner_id == "${var.github_owner_id}" &&
     assertion.repository_id == "${var.github_repository_id}" &&
+    assertion.repository == "${var.github_repository}" &&
+    assertion.repository_owner == "${var.github_owner}" &&
     assertion.ref == "refs/heads/main" &&
     assertion.ref_type == "branch"
   EOT

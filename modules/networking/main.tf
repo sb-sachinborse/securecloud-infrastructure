@@ -40,18 +40,18 @@ resource "google_compute_subnetwork" "subnet" {
   }
 }
 
-# resource "google_compute_firewall" "deny_all_ingress" {
-#   project     = var.project_id
-#   name        = "${var.network_name}-deny-all-ingress"
-#   network     = google_compute_network.vpc.id
-#   description = "Default-deny ingress security baseline"
+resource "google_compute_firewall" "deny_all_ingress" {
+  project     = var.project_id
+  name        = "${var.network_name}-deny-all-ingress"
+  network     = google_compute_network.vpc.id
+  description = "Default-deny ingress security baseline"
 
-#   direction = "INGRESS"
-#   priority  = 65534
+  direction = "INGRESS"
+  priority  = 65534
 
-#   source_ranges = ["0.0.0.0/0"]
+  source_ranges = ["0.0.0.0/0"]
 
-#   deny {
-#     protocol = "all"
-#   }
-# }
+  deny {
+    protocol = "all"
+  }
+}

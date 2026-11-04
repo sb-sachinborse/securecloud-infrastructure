@@ -23,3 +23,15 @@ variable "github_owner_id" {
   description = "Numeric GitHub owner ID"
   type        = string
 }
+
+variable "github_repository" {
+  description = "GitHub repository name (e.g. owner/repo)"
+  type        = string
+  default     = ""
+}
+
+variable "github_owner" {
+  description = "GitHub owner name"
+  type        = string
+  default     = ""
+}
